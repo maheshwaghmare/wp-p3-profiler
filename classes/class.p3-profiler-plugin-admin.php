@@ -273,6 +273,9 @@ class P3_Profiler_Plugin_Admin {
 		// Add the entry ( multisite installs can run more than one concurrent profile )
 		delete_option( 'p3_profiler-error_detection' );
 		$opts = get_option( 'p3-profiler_options' );
+		if ( empty( $opts ) || !is_array( $opts ) ) {
+			$opts = array();
+		}
 		$opts['profiling_enabled'] = array(
 			'ip'                   => stripslashes( $_POST['p3_ip'] ),
 			'disable_opcode_cache' => ( 'true' == $_POST['p3_disable_opcode_cache'] ),

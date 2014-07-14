@@ -137,8 +137,8 @@ class P3_Profiler {
 
 		// Check to see if we should profile
 		$opts = array();
-		if ( function_exists( 'get_option') ) {
-			$opts = get_option('p3-profiler_options' );
+		if ( function_exists( 'p3_get_option') ) {
+			$opts = p3_get_option('p3-profiler_options' );
 			if ( !empty( $opts['profiling_enabled'] ) ) {
 				if ( isset( $this->_debug_entry ) ) {
 					$this->_debug_entry['profiling_enabled']  = true;
@@ -169,7 +169,7 @@ class P3_Profiler {
 		}
 		
 		// Error detection
-		$flag = get_option( 'p3_profiler-error_detection' );
+		$flag = p3_get_option( 'p3_profiler-error_detection' );
 		if ( !empty( $flag ) ) {
 			p3_profiler_disable();
 			delete_option( 'p3_profiler-error_detection' );
@@ -183,7 +183,7 @@ class P3_Profiler {
 		@set_time_limit( 90 );
 		
 		// Set the error detection flag
-		update_option( 'p3_profiler-error_detection', time() );
+		p3_update_option( 'p3_profiler-error_detection', time() );
 		
 		// Set the profile file
 		$this->_profile_filename = $opts['profiling_enabled']['name'] . '.json';
@@ -509,7 +509,7 @@ class P3_Profiler {
 		if ( empty( $error ) || E_ERROR !== $error['type'] ) {
 			delete_option( 'p3_profiler-error_detection' );
 		} else {
-			update_option( 'p3_notices', array( array(
+			p3_update_option( 'p3_notices', array( array(
 				'msg'   => sprintf( __( 'A fatal error occurred during profiling: %s in file %s on line %d ', 'p3-profiler' ), $error['message'], $error['file'], $error['line'] ),
 				'error' => true,
 			) ) );
@@ -517,7 +517,7 @@ class P3_Profiler {
 		unset( $error );
 
 		// Write debug log
-		$opts = get_option('p3-profiler_options' );
+		$opts = p3_get_option('p3-profiler_options' );
 		if ( !empty( $opts['debug'] ) ) {
 			$this->_write_debug_log();
 		}
@@ -618,12 +618,12 @@ class P3_Profiler {
 		unset( $this->_profile['stack'] );
 
 		// Write the profile file
-		$transient   = get_option( 'p3_scan_' . $opts['profiling_enabled']['name'] );
+		$transient   = p3_get_option( 'p3_scan_' . $opts['profiling_enabled']['name'] );
 		if ( false === $transient ) {
 			$transient = '';
 		}
 		$transient  .= json_encode( $this->_profile ) . PHP_EOL;
-		update_option( 'p3_scan_' . $opts['profiling_enabled']['name'], $transient );
+		p3_update_option( 'p3_scan_' . $opts['profiling_enabled']['name'], $transient );
 	}
 	
 	/**
@@ -645,7 +645,7 @@ class P3_Profiler {
 	private function _write_debug_log() {
 
 		// Get the existing log
-		$debug_log = get_option( 'p3-profiler_debug_log' );
+		$debug_log = p3_get_option( 'p3-profiler_debug_log' );
 		if ( empty( $debug_log) ) {
 			$debug_log = array();
 		}
@@ -654,12 +654,12 @@ class P3_Profiler {
 		array_unshift( $debug_log, $this->_debug_entry );
 		if ( count( $debug_log ) >= 100 ) {
 			$debug_log = array_slice( $debug_log, 0, 100 );
-			$opts = get_option( 'p3-profiler_options' );
+			$opts = p3_get_option( 'p3-profiler_options' );
 			$opts['debug'] = false;
-			update_option( 'p3-profiler_options', $opts );
+			p3_update_option( 'p3-profiler_options', $opts );
 		}
 
 		// Write the log
-		update_option( 'p3-profiler_debug_log', $debug_log );
+		p3_update_option( 'p3-profiler_debug_log', $debug_log );
 	}
 }

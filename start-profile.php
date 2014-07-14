@@ -2,7 +2,7 @@
 
 // If profiling hasn't started, start it
 if ( function_exists( 'get_option' ) && !isset( $GLOBALS['p3_profiler'] ) && basename( __FILE__ ) !=  basename( $_SERVER['SCRIPT_FILENAME'] ) ) {
-	$opts = get_option( 'p3-profiler_options' );
+	$opts = p3_get_option( 'p3-profiler_options' );
 	if ( !empty( $opts['profiling_enabled'] ) ) {
 		$file = realpath( dirname( __FILE__ ) ) . '/classes/class.p3-profiler.php';
 		if ( !file_exists( $file ) ) {
@@ -42,15 +42,50 @@ function p3_profiler_get_ip() {
  * @return void
  */
 function p3_profiler_disable() {
-	$opts = get_option( 'p3-profiler_options' );
+	$opts = p3_get_option( 'p3-profiler_options' );
 	$uploads_dir = wp_upload_dir();
 	$path        = $uploads_dir['basedir'] . DIRECTORY_SEPARATOR . 'profiles' . DIRECTORY_SEPARATOR . $opts['profiling_enabled']['name'] . '.json';
-	$transient   = get_option( 'p3_scan_' . $opts['profiling_enabled']['name'] );
+	$transient   = p3_get_option( 'p3_scan_' . $opts['profiling_enabled']['name'] );
 	if ( false === $transient ) {
 		$transient = '';
 	}
 	file_put_contents( $path, $transient );
 	delete_option( 'p3_scan_' . $opts['profiling_enabled']['name'], $transient );
 	$opts['profiling_enabled'] = false;
-	update_option( 'p3-profiler_options', $opts );
+	p3_update_option( 'p3-profiler_options', $opts );
+}
+
+/**
+ * Same as get_option, but bypass the object cache
+ * @param string $option
+ */
+function p3_get_option( $option ) {
+	global $wpdb;
+	$option = trim( $option );
+	if ( empty( $option ) ) {
+		return false;
+	}
+	if ( defined( 'WP_SETUP_CONFIG' ) ) {
+		return false;
+	}
+	$row = $wpdb->get_row( $wpdb->prepare( "SELECT option_value FROM $wpdb->options WHERE option_name = %s LIMIT 1", $option ) );
+	$value = null;
+	if ( is_object( $row ) ) {
+		$value = $row->option_value;
+	}
+	return $value;
+
+}
+
+/**
+ * Same as update_option, but bypass the object cache
+ * @param string $option
+ * @param mixed $value
+ */
+function p3_update_option( $option, $value ) {
+	global $wpdb;
+	$option = trim( $option );
+	$serialized_value = maybe_serialize( $value );
+	$wpdb->update( $wpdb->options, array( 'option_value' => $serialized_value ), array( 'option_name' => $option ) );
+	return true;
 }
